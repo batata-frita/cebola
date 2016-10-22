@@ -1,6 +1,6 @@
 const request = require('request')
 const config = require('./config')
-const util = require('util')
+const log = require('./log')
 
 const neo4j = (query, callback) => {
   request.post({
@@ -10,23 +10,24 @@ const neo4j = (query, callback) => {
       password: 'batata-frita'
     },
     json: {
-      "statements" : [
-        {
-          "statement" : query
-        }
-      ]
+      "statements" : query instanceof Array
+        ? query.map(s => ({'statement': s}))
+        : [
+          {
+            "statement" : query
+          }
+        ]
     }
   }, (err, response, body) => {
-    callback(err, body)
+    if (err) {
+      throw err
+    }
+    callback(body)
   })
 }
 
-neo4j.createUser = ({login, avatar_url, id}) => {
-  neo4j(
-    `CREATE (x:User { handler: '${login}', id: '${id}', avatar: '${avatar_url}' })`,
-    (err, body) => {
-      console.log('CREATED', util.inspect(body, { showHidden: true, depth: null }))
-    })
-}
+neo4j.createUser = ({login, id, avatar_url}) => `CREATE (x:User { handler: '${login}', id: '${id}', avatar: '${avatar_url}' })`
+
+neo4j.follows = (a, b) => `MATCH (a:User { handler: '${a}' }), (b:User { handler: '${b}' }) CREATE (a)-[:FOLLOWS]->(b)`
 
 module.exports = neo4j

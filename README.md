@@ -41,7 +41,7 @@ CREATE CONSTRAINT ON (p:User) ASSERT p.handler IS UNIQUE
 **All**
 
 ```
-MATCH (n) RETURN n LIMIT 100
+MATCH (n) RETURN n LIMIT 1000
 ```
 
 **Cyclic**

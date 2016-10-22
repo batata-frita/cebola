@@ -2,6 +2,7 @@ const github = require('./github')
 const neo4j = require('./neo4j')
 const log = require('./log')
 const request = require('request')
+const every = require('async/every')
 const R = require('ramda')
 
 // github('/users/cpapazaf', (err, body) => {
@@ -14,25 +15,26 @@ const getUser = R.view(R.lensPath(['row', '0']))
 
 const getNeo4JUsers = R.compose(R.map(getUser), getRows)
 
-neo4j('MATCH (a:User) WHERE NOT ()-[:FOLLOWS]->(a) RETURN a LIMIT 10', (err, body) => {
+neo4j('MATCH (a:User) WHERE NOT (a)-[:FOLLOWS]->() RETURN a LIMIT 100', body => {
   getNeo4JUsers(body).forEach((user) => {
-    github(`/users/${user.handler}/followers`, (err, body) => {
-      const queries = R.map(
-        (follower) => [
-          `CREATE (a:User { handler: '${follower.login}', id: '${follower.id}', avatar: '${follower.avatar_url}' })`,
-          `MATCH (a:User { handler: '${follower.login}' }), (b:User { handler: '${user.handler}' }) CREATE (a)-[:FOLLOWS]->(b)`],
-        body
-      )
+    github.following(user.handler, (err, body) => {
+      const statements = R.compose(
+        R.map(following => ({
+          user: neo4j.createUser(following),
+          follows: neo4j.follows(user.handler, following.login)
+        }))
+      )(body)
 
-      R.unnest(queries).forEach(
-        (query) => {
-          // log(query)
-          // return
-          neo4j(query, (err, body) => {
-            log(body)
-          })
-        }
-      )
+      every(statements, (statement, callback) => {
+        neo4j(statement.user, body => {
+          log(body)
+          callback(null, true)
+        })
+      }, () => {
+        neo4j(statements.map(s => s.follows), body => {
+          log(body)
+        })
+      })
     })
   })
 })
