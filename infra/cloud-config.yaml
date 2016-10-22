@@ -1,0 +1,71 @@
+#cloud-config
+
+write_files:
+- path: /opt/bin/digital_ocean_floating_ip.sh
+  permissions: 0755
+  owner: root
+  content: |
+    #!/bin/sh
+    IP=$(curl -s http://169.254.169.254/metadata/v1/interfaces/public/0/anchor_ipv4/address)
+    /usr/bin/ip addr add $IP/16 dev eth0
+
+coreos:
+  units:
+  - name: swap.service
+    command: start
+    content: |
+      [Unit]
+      Description=Turn on swap
+
+      [Service]
+      Type=oneshot
+      Environment="SWAPFILE=/2GiB.swap"
+      RemainAfterExit=true
+      ExecStartPre=/bin/bash -c "\
+        fallocate -l 2g $SWAPFILE && \
+        chmod 600 $SWAPFILE && \
+        chattr +C $SWAPFILE && \
+        mkswap $SWAPFILE && \
+        losetup -f $SWAPFILE"
+      ExecStartPre=/usr/sbin/losetup -f $${SWAPFILE}
+      ExecStart=/usr/bin/sh -c "/sbin/swapon $(/usr/sbin/losetup -j $${SWAPFILE} | /usr/bin/cut -d : -f 1)"
+      ExecStop=/usr/bin/sh -c "/sbin/swapoff $(/usr/sbin/losetup -j $${SWAPFILE} | /usr/bin/cut -d : -f 1)"
+      ExecStopPost=/usr/bin/sh -c "/usr/sbin/losetup -d $(/usr/sbin/losetup -j $${SWAPFILE} | /usr/bin/cut -d : -f 1)"
+
+      [Install]
+      WantedBy=local.target
+
+  - name: digital-ocean-floating-ip.service
+    command: start
+    content: |
+      [Unit]
+      Description=digital-ocean-floating-ip
+      After=network-online.target
+      Description=DigitalOcean Floating IP
+      Documentation=https://www.digitalocean.com/community/tutorials/how-to-enable-floating-ips-on-an-older-droplet#coreos
+      Requires=network-online.target
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/opt/bin/digital_ocean_floating_ip.sh
+
+  - name: neo4j.service
+    command: restart
+    content: |
+      [Unit]
+      Description=neo4j
+      After=docker.service
+      Requires=docker.service
+
+      [Service]
+      KillMode=none
+      User=core
+      Restart=always
+      RestartSec=20s
+
+      ExecStartPre=-/usr/bin/docker kill neo4j
+      ExecStartPre=-/usr/bin/docker rm neo4j
+      ExecStartPre=/usr/bin/docker pull neo4j:3.0
+      ExecStart=/usr/bin/docker run --name neo4j --publish=7474:7474 --publish=7687:7687 --volume=/home/core/neo4j/data:/data --volume=/home/core/neo4j/logs:/logs neo4j:3.0
+      ExecStop=/usr/bin/docker stop neo4j
