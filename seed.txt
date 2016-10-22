@@ -1,0 +1,3 @@
+CREATE CONSTRAINT ON (p:User) ASSERT p.handler IS UNIQUE
+CREATE (a:User { handler: 'gaearon', id: '810438', avatar: 'https://avatars.githubusercontent.com/u/810438?v=3' })
+CREATE (a:User { handler: 'petebacondarwin', id: '15655', avatar: 'https://avatars.githubusercontent.com/u/15655?v=3' })
