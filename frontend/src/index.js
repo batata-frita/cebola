@@ -1,9 +1,10 @@
 import injectTapEventPlugin from 'react-tap-event-plugin'
-import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider'
 import { render } from 'react-dom'
 import React from 'react'
 import starField from './star-field'
 import App from './app'
+import './index.css'
 // import starsFixtures from './stars.fixture.json'
 
 // Needed for onTouchTap
@@ -11,8 +12,10 @@ import App from './app'
 injectTapEventPlugin()
 
 starField(['pirelenito', 'xaviervia']).then((stars) => {
+  console.log(stars)
+
 // Promise.resolve(starsFixtures).then((stars) => {
-  console.log(JSON.stringify(stars))
+  // console.log(JSON.stringify(stars))
   render(
     <MuiThemeProvider>
       <App stars={stars} />

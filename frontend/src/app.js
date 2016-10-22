@@ -1,6 +1,5 @@
 import React from 'react'
 import { GridList, GridTile } from 'material-ui/GridList'
-import Subheader from 'material-ui/Subheader'
 
 const styles = {
   root: {
@@ -9,6 +8,7 @@ const styles = {
     justifyContent: 'space-around'
   },
   gridList: {
+    margin: 'auto',
     width: '600px',
     height: '100%',
     overflowY: 'auto'
@@ -23,12 +23,11 @@ export default React.createClass({
           cellHeight={180}
           style={styles.gridList}
         >
-          <Subheader>Here is the outside of your echo chamber</Subheader>
           {this.props.stars.map((star) => (
             <GridTile
               key={star.id}
               title={star.name}
-              subtitle={<span>by <b>{star.owner.login}</b></span>}
+              subtitle={<span>by <b>{star.owner.login}</b> {star.id}</span>}
             >
               <img src={star.owner.avatar_url} />
             </GridTile>

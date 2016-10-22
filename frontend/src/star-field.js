@@ -6,5 +6,7 @@ const getStars = (user) => axios.get(`https://api.github.com/users/${user}/starr
 export default (users) => (
   Promise.all(users.map(getStars))
     .then(R.unnest)
-    .then(R.uniqBy.bind(null, (a, b) => a.id))
+    .then(R.groupWith((a, b) => a.id === b.id))
+    .then(R.map((group) => ({ ...group[0], count: group.length })))
+    .then(R.sortBy(R.prop('count')))
 )
