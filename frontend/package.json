@@ -20,5 +20,12 @@
   "license": "ISC",
   "devDependencies": {
     "sagui": "^7.1.1"
+  },
+  "dependencies": {
+    "axios": "^0.15.2",
+    "material-ui": "^0.16.1",
+    "react": "^15.3.2",
+    "react-dom": "^15.3.2",
+    "react-tap-event-plugin": "^1.0.0"
   }
 }
