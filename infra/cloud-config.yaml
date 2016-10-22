@@ -11,6 +11,21 @@ write_files:
 
 coreos:
   units:
+  - name: digital-ocean-floating-ip.service
+    command: start
+    content: |
+      [Unit]
+      Description=digital-ocean-floating-ip
+      After=network-online.target
+      Description=DigitalOcean Floating IP
+      Documentation=https://www.digitalocean.com/community/tutorials/how-to-enable-floating-ips-on-an-older-droplet#coreos
+      Requires=network-online.target
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/opt/bin/digital_ocean_floating_ip.sh
+
   - name: swap.service
     command: start
     content: |
@@ -34,21 +49,6 @@ coreos:
 
       [Install]
       WantedBy=local.target
-
-  - name: digital-ocean-floating-ip.service
-    command: start
-    content: |
-      [Unit]
-      Description=digital-ocean-floating-ip
-      After=network-online.target
-      Description=DigitalOcean Floating IP
-      Documentation=https://www.digitalocean.com/community/tutorials/how-to-enable-floating-ips-on-an-older-droplet#coreos
-      Requires=network-online.target
-
-      [Service]
-      Type=oneshot
-      RemainAfterExit=yes
-      ExecStart=/opt/bin/digital_ocean_floating_ip.sh
 
   - name: neo4j.service
     command: restart
